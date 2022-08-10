@@ -1,0 +1,39 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: git-clone-pipeline
+spec:
+  workspaces:
+    - name: git-clone-workspace
+    - name: git-credentials
+  params:
+    - name: git-repo-url
+      description: The private Git repository URL
+      type: string
+      default: git@github.com:hkb3711220/ProfileSite2.git
+    - name: revision
+      description: The private GitHub revision to use
+      type: string
+      default: main
+  tasks:
+    - name: git-clone
+      taskRef: 
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.git-repo-url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: output
+          workspace: git-clone-workspace
+        - name: ssh-directory
+          workspace: git-credentials
+    - name: check-result
+      runAfter:
+        - git-clone
+      taskRef:
+        name: check-git-clone-result
+      workspaces:
+        - name: source
+          workspace: git-clone-workspace

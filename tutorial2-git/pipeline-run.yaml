@@ -1,0 +1,19 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: git-clone-pipeline-run
+spec:
+  pipelineRef:
+    name: git-clone-pipeline
+  workspaces:
+    - name: git-clone-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - "ReadWriteOnce"
+          resources:
+            requests:
+              storage: 1Gi
+    - name: git-credentials
+      secret:
+        secretName: github-ssh
