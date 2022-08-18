@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: git2img-pipeline-run
+spec:
+  pipelineRef:
+    name: git2img-pipeline
+  workspaces:
+    - name: git-clone-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - "ReadWriteOnce"
+          resources:
+            requests:
+              storage: 1Gi
+    - name: git-credentials
+      secret:
+        secretName: git-cred
+    - name: docker-credentials
+      secret:
+        secretName: docker-cred
+  params:
+    - name: image-reference
+      value: asia-northeast1-docker.pkg.dev/civil-campaign-244100/chanhu-profile-site/web-app:stable
