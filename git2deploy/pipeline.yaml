@@ -1,0 +1,77 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: git2build2deploy-pipeline
+spec:
+  workspaces:
+    - name: git-clone-workspace
+    - name: git-credentials
+    - name: docker-credentials
+  params:
+    - name: git-repo-url
+      description: The private Git repository URL
+      type: string
+    - name: revision
+      description: The private GitHub revision to use
+      type: string
+      default: main
+    - name: image-reference
+      description: HOST-NAME/PROJECT-ID/REPOSITORY/IMAGE
+      type: string
+      default: example.com/web-app:lastest
+    - name: image-build
+      default: "false"
+    - name: manifest-deploy
+      default: "false"
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.git-repo-url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: output
+          workspace: git-clone-workspace
+        - name: ssh-directory
+          workspace: git-credentials
+    - name: build-image
+      taskRef:
+        name: kaniko
+      when:
+        - input: $(params.image-build)
+          operator: in
+          values:
+            - "true"
+      runAfter:
+        - git-clone
+      workspaces:
+        - name: source
+          workspace: git-clone-workspace
+        - name: dockerconfig
+          workspace: docker-credentials
+      params:
+        - name: IMAGE
+          value: $(params.image-reference)
+    - name: deploy-manifest
+      taskRef:
+        name: kubernetes-actions
+      runAfter:
+        - git-clone
+        - build-image
+      when:
+        - input: $(params.manifest-deploy)
+          operator: in
+          values:
+            - "true"
+      workspaces:
+        - name: manifest-dir
+          workspace: git-clone-workspace
+      params:
+        - name: script
+          value: |
+            ls /workspace/
+            kubectl apply -f /workspace/manifest-dir/deployment.yaml
+            kubectl get deployment

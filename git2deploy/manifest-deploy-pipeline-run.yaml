@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: manifest-deploy-pipeline-run
+spec:
+  serviceAccountName: tekton-admin #実行のService Acountを指定する。
+  pipelineRef:
+    name: git2build2deploy-pipeline
+  workspaces:
+    - name: git-clone-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - "ReadWriteOnce"
+          resources:
+            requests:
+              storage: 1Gi
+    - name: git-credentials
+      secret:
+        secretName: git-cred
+    - name: docker-credentials
+      secret:
+        secretName: docker-cred
+  params:
+    - name: git-repo-url
+      value: git@github.com:hkb3711220/ProfileSite2.git #個人のアプリに書き換えてください！
+    - name: manifest-deploy
+      value: "true"

@@ -1,0 +1,37 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: git-clone-pipeline-trigger-template
+spec:
+  params:
+  - name: gitrevision
+    description: The git revision
+    default: main
+  - name: gitrepositoryurl
+    description: The git repository url
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      generateName: git-clone-pipeline-run
+    spec:
+      serviceAccountName: tekton-admin #絞られた権限で実行する
+      pipelineRef:
+        name: git-clone-pipeline
+      params:
+      - name: revision
+        value: $(tt.params.gitrevision)
+      - name: url
+        value: $(tt.params.gitrepositoryurl)
+      workspaces:
+      - name: git-clone-workspace
+        volumeClaimTemplate:
+          spec:
+            accessModes:
+              - "ReadWriteOnce"
+            resources:
+              requests:
+                storage: 1Gi
+      - name: git-cred
+        secret:
+          secretName: git-cred

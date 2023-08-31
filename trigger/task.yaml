@@ -1,0 +1,13 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: check-workspace
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: build-sources
+      image: ubuntu
+      command:
+        - /bin/bash
+      args: ['-c', 'ls workspace/source']
